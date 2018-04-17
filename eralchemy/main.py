@@ -365,15 +365,16 @@ def render_er(
     :param schema: name of the schema
     :param title: title of the graph, only for .er, .dot, .png, .jpg outputs.
     """
+
     try:
         tables, relationships = all_to_intermediary(input, schema=schema)
-        if include is not None:
-            tables, relationships = filter_includes(tables, relationships, include)
-        if exclude is not None:
-            tables, relationships = filter_excludes(tables, relationships, exclude)
-        intermediary_to_output = get_output_mode(output, mode)
-        out = intermediary_to_output(tables, relationships, output)
-        return out
+        tables, relationships = filter_resources(tables, relationships,
+                                                 include_tables=include_tables, include_columns=include_columns,
+                                                 exclude_tables=exclude_tables, exclude_columns=exclude_columns)
+        gvo = intermediary_to_output(tables, relationships, output)
+        #return graphviz object which has a _repr_svg_()-method
+        #http://graphviz.readthedocs.io/en/stable/manual.html#jupyter-notebooks
+        return gvo
     except ImportError as e:
         module_name = e.message.split()[-1]
         print(f'Please install {module_name} using "pip install {module_name}".')
@@ -381,7 +382,6 @@ def render_er(
         print(f"{e}")
     except ParsingException as e:
         sys.stderr.write(e.message)
-
 
 if __name__ == "__main__":
     cli()
