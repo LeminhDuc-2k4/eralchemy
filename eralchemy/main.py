@@ -5,9 +5,8 @@ import re
 import sys
 from importlib.metadata import PackageNotFoundError, version
 
-#from pygraphviz.agraph import AGraph
+# from pygraphviz.agraph import AGraph
 from graphviz import Source
-
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.exc import ArgumentError
 
@@ -141,12 +140,12 @@ def intermediary_to_dot(tables, relationships, output, title=""):
 def intermediary_to_schema(tables, relationships, output, title=""):
     """Transforms and save the intermediary representation to the file chosen."""
     dot_file = _intermediary_to_dot(tables, relationships, title)
-    #graph = AGraph()
-    #graph = graph.from_string(dot_file)
-    extension = output.split('.')[-1]
-    #graph.draw(path=output, prog='dot', format=extension)
-    #Source.from_file(filename, engine='dot', format=extension)
-    return Source(dot_file, engine='dot', format=extension)
+    # graph = AGraph()
+    # graph = graph.from_string(dot_file)
+    extension = output.split(".")[-1]
+    # graph.draw(path=output, prog='dot', format=extension)
+    # Source.from_file(filename, engine='dot', format=extension)
+    return Source(dot_file, engine="dot", format=extension)
 
 
 def _intermediary_to_markdown(tables, relationships):
@@ -365,15 +364,21 @@ def render_er(
     :param schema: name of the schema
     :param title: title of the graph, only for .er, .dot, .png, .jpg outputs.
     """
-
     try:
         tables, relationships = all_to_intermediary(input, schema=schema)
-        tables, relationships = filter_resources(tables, relationships,
-                                                 include_tables=include_tables, include_columns=include_columns,
-                                                 exclude_tables=exclude_tables, exclude_columns=exclude_columns)
+        tables, relationships = filter_resources(
+            tables,
+            relationships,
+            include_tables=include_tables,
+            include_columns=include_columns,
+            exclude_tables=exclude_tables,
+            exclude_columns=exclude_columns,
+        )
+        intermediary_to_output = get_output_mode(output, mode)
         gvo = intermediary_to_output(tables, relationships, output)
-        #return graphviz object which has a _repr_svg_()-method
-        #http://graphviz.readthedocs.io/en/stable/manual.html#jupyter-notebooks
+        gvo.render(outfile=output)
+        # return graphviz object which has a _repr_svg_()-method
+        # http://graphviz.readthedocs.io/en/stable/manual.html#jupyter-notebooks
         return gvo
     except ImportError as e:
         module_name = e.message.split()[-1]
@@ -382,6 +387,7 @@ def render_er(
         print(f"{e}")
     except ParsingException as e:
         sys.stderr.write(e.message)
+
 
 if __name__ == "__main__":
     cli()
