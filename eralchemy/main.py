@@ -1,12 +1,11 @@
 import argparse
 import base64
 import copy
+import logging
 import re
 import sys
 from importlib.metadata import PackageNotFoundError, version
 
-#from pygraphviz.agraph import AGraph
-from graphviz import Source
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.exc import ArgumentError
 
@@ -22,6 +21,20 @@ from .sqla import (
     declarative_to_intermediary,
     metadata_to_intermediary,
 )
+
+USE_PYGRAPHVIZ = True
+try:
+    from pygraphviz.agraph import AGraph
+
+    logging.debug("using pygraphviz")
+except ImportError:
+    USE_PYGRAPHVIZ = False
+    try:
+        from graphviz import Source
+
+        logging.debug("using graphviz")
+    except ImportError:
+        logging.error("either pygraphviz or graphviz need to be installed")
 
 try:
     __version__ = version(__package__)
@@ -140,12 +153,15 @@ def intermediary_to_dot(tables, relationships, output, title=""):
 def intermediary_to_schema(tables, relationships, output, title=""):
     """Transforms and save the intermediary representation to the file chosen."""
     dot_file = _intermediary_to_dot(tables, relationships, title)
-    #graph = AGraph()
-    #graph = graph.from_string(dot_file)
-    extension = output.split('.')[-1]
-    #graph.draw(path=output, prog='dot', format=extension)
-    #Source.from_file(filename, engine='dot', format=extension)
-    return Source(dot_file, engine='dot', format=extension)
+    extension = output.split(".")[-1]
+    if USE_PYGRAPHVIZ:
+        graph = AGraph()
+        graph = graph.from_string(dot_file)
+        graph.draw(path=output, prog="dot", format=extension)
+    else:
+        graph = Source(dot_file, engine="dot", format=extension)
+        graph.render(outfile=output, cleanup=True)
+    return graph
 
 
 def _intermediary_to_markdown(tables, relationships):
@@ -366,10 +382,14 @@ def render_er(
     """
     try:
         tables, relationships = all_to_intermediary(input, schema=schema)
-        if include is not None:
-            tables, relationships = filter_includes(tables, relationships, include)
-        if exclude is not None:
-            tables, relationships = filter_excludes(tables, relationships, exclude)
+        tables, relationships = filter_resources(
+            tables,
+            relationships,
+            include_tables=include_tables,
+            include_columns=include_columns,
+            exclude_tables=exclude_tables,
+            exclude_columns=exclude_columns,
+        )
         intermediary_to_output = get_output_mode(output, mode)
         out = intermediary_to_output(tables, relationships, output)
         return out
