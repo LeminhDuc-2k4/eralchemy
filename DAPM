@@ -1,0 +1,63 @@
+from eralchemy import render_er
+
+# Create the ERD diagram for the given schema
+output_path = "/mnt/data/student_management_erd.png"
+
+# ERD as code following the problem description
+erd_code = """
+[Student] 
+*StudentID pk
+FullName
+DateOfBirth
+Address
+Email
+PhoneNumber
+EnrollmentDate
+Scholarship
+
+[Course]
+*CourseID pk
+CourseName
+Credits
+Description
+
+[Instructor]			
+*InstructorID pk
+FullName
+Email
+PhoneNumber
+Department
+
+[Class]
+*ClassID pk
+StartTime
+EndTime
+ClassDays
+CourseID fk
+InstructorID fk
+
+[Grade]
+*StudentID fk
+*ClassID fk
+Score
+Semester
+
+[Tuition]
+*TuitionID pk
+Amount
+PaymentDate
+PaymentStatus
+StudentID fk
+
+Student ||-o{ Grade
+Class ||-o{ Grade
+Course ||-o{ Class
+Instructor ||-o{ Class
+Student ||-o{ Tuition
+"""
+
+# Generate the ERD
+render_er(erd_code, output_path)
+
+output_path
+pip install eralchemy
